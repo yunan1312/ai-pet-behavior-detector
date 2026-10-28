@@ -1,0 +1,160 @@
+{
+  "keypoints": [
+    {
+      "id": 0,
+      "name": "left_eye",
+      "label": "左眼"
+    },
+    {
+      "id": 1,
+      "name": "right_eye",
+      "label": "右眼"
+    },
+    {
+      "id": 2,
+      "name": "nose",
+      "label": "鼻子"
+    },
+    {
+      "id": 3,
+      "name": "left_ear",
+      "label": "左耳"
+    },
+    {
+      "id": 4,
+      "name": "right_ear",
+      "label": "右耳"
+    },
+    {
+      "id": 5,
+      "name": "left_front_shoulder",
+      "label": "左前肩"
+    },
+    {
+      "id": 6,
+      "name": "right_front_shoulder",
+      "label": "右前肩"
+    },
+    {
+      "id": 7,
+      "name": "left_front_elbow",
+      "label": "左前肘"
+    },
+    {
+      "id": 8,
+      "name": "right_front_elbow",
+      "label": "右前肘"
+    },
+    {
+      "id": 9,
+      "name": "left_front_paw",
+      "label": "左前爪"
+    },
+    {
+      "id": 10,
+      "name": "right_front_paw",
+      "label": "右前爪"
+    },
+    {
+      "id": 11,
+      "name": "left_back_shoulder",
+      "label": "左后肩"
+    },
+    {
+      "id": 12,
+      "name": "right_back_shoulder",
+      "label": "右后肩"
+    },
+    {
+      "id": 13,
+      "name": "left_back_elbow",
+      "label": "左后肘"
+    },
+    {
+      "id": 14,
+      "name": "right_back_elbow",
+      "label": "右后肘"
+    },
+    {
+      "id": 15,
+      "name": "left_back_paw",
+      "label": "左后爪"
+    },
+    {
+      "id": 16,
+      "name": "right_back_paw",
+      "label": "右后爪"
+    }
+  ],
+  "skeleton": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      4
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      6,
+      8
+    ],
+    [
+      7,
+      9
+    ],
+    [
+      8,
+      10
+    ],
+    [
+      11,
+      12
+    ],
+    [
+      11,
+      13
+    ],
+    [
+      12,
+      14
+    ],
+    [
+      13,
+      15
+    ],
+    [
+      14,
+      16
+    ]
+  ],
+  "description": "AP-10K 动物姿态关键点定义",
+  "supported_animals": [
+    "cat",
+    "dog",
+    "horse",
+    "cow",
+    "sheep",
+    "pig"
+  ]
+}

@@ -1,0 +1,75 @@
+intents:
+  stretching:
+    zh_CN: "我刚刚睡醒，正在舒展身体，好舒服呀~"
+    en_US: "I just woke up and am stretching my body, feels great~"
+    keywords: ["伸懒腰", "伸展", "拉长身体"]
+
+  head_bunting:
+    zh_CN: "这是我的地盘啦，我已经在这里留下我的气味了~"
+    en_US: "This is my territory! I have marked it with my scent~"
+    keywords: ["蹭东西", "用头蹭", "摩擦"]
+
+  tail_raising:
+    zh_CN: "我感到好奇和开心，尾巴高高翘起是我开心的表现~"
+    en_US: "I am curious and happy, my tail high up means I am joyful~"
+    keywords: ["尾巴竖起", "翘尾巴", "尾巴向上"]
+
+  belly_exposure:
+    zh_CN: "我完全信任你，才会露出我的小肚肚哦~"
+    en_US: "I completely trust you, thats why I am showing my belly~"
+    keywords: ["露肚皮", "翻身", "躺倒"]
+
+  slow_blinking:
+    zh_CN: "我感到很放松，向你送上一个甜蜜的眨眼~"
+    en_US: "I feel relaxed and am giving you a sweet slow blink~"
+    keywords: ["缓慢眨眼", "眯眼", "眨眼"]
+
+  airplane_ears:
+    zh_CN: "我感到有点紧张或不安，耳朵变成飞机形状了..."
+    en_US: "I feel a bit nervous or uneasy, my ears are like airplanes..."
+    keywords: ["飞机耳", "耳朵向后", "压平耳朵"]
+
+  walking:
+    zh_CN: "我在悠闲地散步，探索一下周围的环境~"
+    en_US: "I am taking a leisurely walk and exploring the surroundings~"
+    keywords: ["走路", "行走", "漫步"]
+
+  running:
+    zh_CN: "太好玩了！我在快速奔跑，释放我的能量~"
+    en_US: "So much fun! I am running fast and releasing my energy~"
+    keywords: ["奔跑", "快跑", "跑步"]
+
+  sitting:
+    zh_CN: "我在安静地休息，观察一下周围的情况~"
+    en_US: "I am resting quietly and observing my surroundings~"
+    keywords: ["坐着", "静坐", "蹲坐"]
+
+  sleeping:
+    zh_CN: "我正在美美地睡觉，不要打扰我哦~"
+    en_US: "I am having a nice sleep, please dont disturb me~"
+    keywords: ["睡觉", "睡眠", "打盹"]
+
+  grooming:
+    zh_CN: "我在认真地梳理毛发，保持干净整洁~"
+    en_US: "I am carefully grooming myself to stay clean~"
+    keywords: ["理毛", "舔毛", "清洁"]
+
+  hunting:
+    zh_CN: "我发现了一个有趣的猎物，正在准备出击！"
+    en_US: "I spotted an interesting prey, getting ready to pounce!"
+    keywords: ["捕猎", "蹲守", "伏击"]
+
+  playing:
+    zh_CN: "太好玩了！我精力充沛，想要玩耍~"
+    en_US: "So much fun! I have lots of energy and want to play~"
+    keywords: ["玩耍", "嬉戏", "游戏"]
+
+  tail_lashing:
+    zh_CN: "我有点烦躁或激动，尾巴甩来甩去..."
+    en_US: "I am a bit agitated or excited, my tail is swishing..."
+    keywords: ["甩尾巴", "尾巴摆动", "摇尾巴"]
+
+  kneading:
+    zh_CN: "我感到很放松和满足，在做踩奶呢~"
+    en_US: "I feel relaxed and content, I am kneading~"
+    keywords: ["踩奶", "揉捏", "按摩"]
