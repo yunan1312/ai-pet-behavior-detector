@@ -132,13 +132,21 @@ class TestClassifierWithoutEars:
             'right_back_paw': (380, 450, 0.9),
         }
 
-    def test_body_height_uses_withers_when_ears_missing(self, keypoints_without_ears):
+    def test_body_height_is_normalized_by_body_length(self, keypoints_without_ears):
         classifier = RuleBasedBehaviorClassifier()
+        keypoints = keypoints_without_ears
 
-        height = classifier._body_height(keypoints_without_ears)
+        height = classifier._body_height(keypoints)
 
-        # 背线 y=100 → 后爪 y=450，高度 = 350/480
-        assert height == pytest.approx(350 / 480)
+        # 背线 (300,100) → 尾根 (500,130) 为身体尺度，爪尖到背线的垂直距离除以它
+        scale = ((500 - 300) ** 2 + (130 - 100) ** 2) ** 0.5
+        assert height == pytest.approx(350 / scale)
+        # 归一化后与分辨率无关：整体放大 2 倍结果不变
+        doubled = {
+            name: (x * 2, y * 2, conf)
+            for name, (x, y, conf) in keypoints.items()
+        }
+        assert classifier._body_height(doubled) == pytest.approx(height)
 
     def test_airplane_ears_not_triggered_without_ears(self, keypoints_without_ears):
         classifier = RuleBasedBehaviorClassifier()
@@ -146,3 +154,85 @@ class TestClassifierWithoutEars:
         behavior, _confidence = classifier._classify_from_keypoints(keypoints_without_ears)
 
         assert behavior != 'airplane_ears'
+
+def test_letterbox_preserves_aspect_ratio():
+    processor = _make_processor()
+    frame = np.zeros((100, 200, 3), dtype=np.uint8)
+
+    letterboxed, ratio, pad_x, pad_y = processor._letterbox(frame, 256, 256)
+
+    assert letterboxed.shape == (256, 256, 3)
+    assert ratio == pytest.approx(256 / 200)
+    assert pad_x == 0
+    assert pad_y == 64
+
+
+def test_decode_simcc_compensates_letterbox_padding():
+    processor = _make_processor()
+    pred_x = np.zeros((17, 512), dtype=np.float32)
+    pred_y = np.zeros((17, 512), dtype=np.float32)
+    pred_x[:, 256] = 0.5  # x_input = 128
+    pred_y[:, 256] = 0.5  # y_input = 128
+
+    keypoints = processor._decode_simcc(
+        pred_x, pred_y, 256, 256, scale=2.0, pad_x=16, pad_y=16
+    )
+
+    assert keypoints['nose'][0] == pytest.approx((128 - 16) / 2.0)
+    assert keypoints['nose'][1] == pytest.approx((128 - 16) / 2.0)
+
+
+def test_geometry_fallback_returns_no_fake_keypoints():
+    """没有姿态模型时不应编造关键点"""
+    processor = _make_processor()
+    assert processor._estimate_geometry_based(np.zeros((64, 64, 3), np.uint8), 64, 64) == {}
+
+
+class _FakeTensor:
+    def __init__(self, values):
+        self.values = values
+
+    def cpu(self):
+        return self
+
+    def numpy(self):
+        return np.array(self.values, dtype=np.float32)
+
+    def __getitem__(self, index):
+        return self
+
+
+class _FakeBox:
+    def __init__(self, box, confidence, class_id=15):
+        self.xyxy = [_FakeTensor(box)]
+        self.conf = [confidence]
+        self.cls = [class_id]
+
+
+class _FakeResult:
+    def __init__(self, boxes):
+        self.boxes = boxes
+
+
+class _FakeDetector:
+    def __init__(self, boxes):
+        self.boxes = boxes
+
+    def __call__(self, _frame, **_kwargs):
+        return [_FakeResult(self.boxes)]
+
+
+def test_detection_keeps_main_subject_and_drops_tiny_boxes():
+    """大而可信的主体优先，远处微小目标不应抢占姿态估计区域"""
+    processor = _make_processor()
+    processor.detector = _FakeDetector([
+        _FakeBox((100, 100, 140, 140), 0.95),   # 0.5% 面积，过滤
+        _FakeBox((50, 50, 400, 450), 0.30),     # 51% 面积
+        _FakeBox((300, 300, 380, 380), 0.90),   # 2% 面积
+    ])
+
+    detections = processor._detect_animals(np.zeros((480, 640, 3), np.uint8))
+
+    assert len(detections) == 2
+    assert detections[0]['box'] == (50, 50, 400, 450)
+    assert all(d['area_ratio'] >= 0.01 for d in detections)

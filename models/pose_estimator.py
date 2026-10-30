@@ -23,6 +23,11 @@ from utils.constants import KEYPOINTS, KEYPOINT_CONNECTIONS
 ANIMAL_CLASS_IDS = {15, 16, 17}  # cat=15, dog=16, horse=17
 ANIMAL_CLASS_NAMES = {15: 'cat', 16: 'dog', 17: 'horse'}
 
+# 检测阈值：0.25 能召回侧躺等非常规姿态（实测 0.35 会整帧漏检），
+# 类别限定 + 最小面积过滤用于抑制低阈值带来的背景误报
+DETECTION_CONFIDENCE = 0.25
+MIN_DETECTION_AREA_RATIO = 0.01
+
 # AP-10K 官方关键点顺序（17 个），来源 mmpose ap10k_dataset.py：
 # 0 左眼 1 右眼 2 鼻子 3 颈部(withers) 4 尾根 5 左前肩 6 左前肘 7 左前爪
 # 8 右前肩 9 右前肘 10 右前爪 11 左后肩 12 左后肘 13 左后爪
@@ -52,6 +57,7 @@ class AnimalPoseProcessor:
         self.detector_name = "none"
         self.pose_model_name = "none"
         self.logger = get_logger()
+        self._last_detection: Optional[Dict] = None
 
         model_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
 
@@ -125,9 +131,11 @@ class AnimalPoseProcessor:
             return []
 
         try:
-            # 0.35 兼顾远距离/侧身动物：阈值过高会漏检低置信度目标，
-            # 过低则容易把背景误当动物。类别已限定为猫/狗/马，误报可控。
-            results = self.detector(frame, verbose=False, conf=0.35, classes=list(ANIMAL_CLASS_IDS))
+            results = self.detector(
+                frame, verbose=False, conf=DETECTION_CONFIDENCE,
+                classes=list(ANIMAL_CLASS_IDS),
+            )
+            frame_area = float(frame.shape[0] * frame.shape[1]) or 1.0
             detections = []
 
             for r in results:
@@ -137,15 +145,23 @@ class AnimalPoseProcessor:
                         conf = float(box.conf[0])
                         cls_id = int(box.cls[0])
                         cls_name = ANIMAL_CLASS_NAMES.get(cls_id, f'animal_{cls_id}')
+                        x1, y1, x2, y2 = (float(v) for v in xyxy)
+                        area_ratio = max(0.0, x2 - x1) * max(0.0, y2 - y1) / frame_area
+                        if area_ratio < MIN_DETECTION_AREA_RATIO:
+                            continue
                         detections.append({
-                            'box': tuple(xyxy.astype(int)),
+                            'box': tuple(int(v) for v in xyxy),
                             'class_id': cls_id,
                             'class_name': cls_name,
                             'confidence': conf,
+                            'area_ratio': area_ratio,
                         })
 
-            # 按置信度排序，取最佳结果
-            detections.sort(key=lambda d: d['confidence'], reverse=True)
+            # 主体优先：大面积且高置信度的目标才是画面主角，
+            # 避免远处高置信度的小目标抢走近处宠物
+            detections.sort(
+                key=lambda d: d['area_ratio'] * d['confidence'], reverse=True
+            )
             return detections
 
         except Exception as e:
@@ -250,13 +266,17 @@ class AnimalPoseProcessor:
         return global_kpts
 
     def _estimate_onnx(self, frame: np.ndarray, img_w: int, img_h: int) -> Dict:
-        """RTMPose ONNX 推理（MMPose 预处理：BGR→RGB + ImageNet 归一化）"""
+        """RTMPose ONNX 推理（MMPose 预处理：等比缩放 + padding + ImageNet 归一化）
+
+        直接 resize 到 256x256 会破坏长宽比，导致关节角度和身体比例失真；
+        这里保持等比缩放并居中填充，与 MMPose 的 bbox 预处理一致。
+        """
         try:
             input_name = self.pose_model.get_inputs()[0].name
             input_w, input_h = self.input_size
 
-            resized = cv2.resize(frame, (input_w, input_h))
-            rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
+            letterboxed, ratio, pad_x, pad_y = self._letterbox(frame, input_w, input_h)
+            rgb = cv2.cvtColor(letterboxed, cv2.COLOR_BGR2RGB)
             input_img = rgb.astype(np.float32) / 255.0
             mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
             std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
@@ -265,11 +285,32 @@ class AnimalPoseProcessor:
             outputs = self.pose_model.run(None, {input_name: input_img})
 
             if len(outputs) >= 2:
-                return self._decode_simcc(outputs[0][0], outputs[1][0], img_w, img_h)
+                return self._decode_simcc(
+                    outputs[0][0], outputs[1][0], img_w, img_h,
+                    scale=ratio, pad_x=pad_x, pad_y=pad_y,
+                )
             return self._process_onnx_outputs(outputs, img_w, img_h)
         except Exception as e:
             self.logger.error(f"ONNX error: {e}")
-            return self._estimate_geometry_based(frame, img_w, img_h)
+            return {}
+
+    @staticmethod
+    def _letterbox(frame: np.ndarray, input_w: int, input_h: int, pad_value: int = 114):
+        """等比缩放并居中填充，返回 (图像, 缩放比例, 左填充, 上填充)"""
+        h, w = frame.shape[:2]
+        if w <= 0 or h <= 0:
+            return np.full((input_h, input_w, 3), pad_value, dtype=np.uint8), 1.0, 0, 0
+
+        ratio = min(input_w / w, input_h / h)
+        new_w = max(1, int(round(w * ratio)))
+        new_h = max(1, int(round(h * ratio)))
+        resized = cv2.resize(frame, (new_w, new_h))
+
+        canvas = np.full((input_h, input_w, 3), pad_value, dtype=np.uint8)
+        pad_x = (input_w - new_w) // 2
+        pad_y = (input_h - new_h) // 2
+        canvas[pad_y:pad_y + new_h, pad_x:pad_x + new_w] = resized
+        return canvas, ratio, pad_x, pad_y
 
     def _estimate_yolo(self, frame: np.ndarray, img_w: int, img_h: int) -> Dict:
         """YOLO 姿态模型推理"""
@@ -286,32 +327,28 @@ class AnimalPoseProcessor:
         return self._estimate_geometry_based(frame, img_w, img_h)
 
     def _estimate_geometry_based(self, frame: np.ndarray, img_w: int, img_h: int) -> Dict:
-        """基于几何特征的关键点估算（无姿态模型时的回退方案）"""
-        cx, cy = img_w / 2, img_h / 2
-        result = {}
-        offsets = {
-            'left_eye': (-img_w*0.12, -img_h*0.25), 'right_eye': (img_w*0.12, -img_h*0.25),
-            'nose': (0, -img_h*0.18), 'left_ear': (-img_w*0.28, -img_h*0.35), 'right_ear': (img_w*0.28, -img_h*0.35),
-            'left_front_shoulder': (-img_w*0.3, -img_h*0.05), 'right_front_shoulder': (img_w*0.3, -img_h*0.05),
-            'left_front_elbow': (-img_w*0.35, img_h*0.15), 'right_front_elbow': (img_w*0.35, img_h*0.15),
-            'left_front_paw': (-img_w*0.3, img_h*0.4), 'right_front_paw': (img_w*0.3, img_h*0.4),
-            'left_back_shoulder': (-img_w*0.25, img_h*0.15), 'right_back_shoulder': (img_w*0.25, img_h*0.15),
-            'left_back_elbow': (-img_w*0.3, img_h*0.35), 'right_back_elbow': (img_w*0.3, img_h*0.35),
-            'left_back_paw': (-img_w*0.25, img_h*0.55), 'right_back_paw': (img_w*0.25, img_h*0.55),
-        }
-        for name, (dx, dy) in offsets.items():
-            result[name] = (max(0, min(cx + dx, img_w)), max(0, min(cy + dy, img_h)), 0.5)
-        return result
+        """无可用姿态模型时返回空关键点
+
+        早期版本会按固定比例编造一套关键点，这会让规则分类器在
+        「根本没识别到动物」的情况下输出行为标签，属于假阳性来源，
+        因此改为返回空结果，由调用方按「未检测到动物」处理。
+        """
+        return {}
 
     # ==================== SimCC 解码 & 映射 ====================
 
     def _decode_simcc(self, pred_x: np.ndarray, pred_y: np.ndarray,
-                      img_w: int, img_h: int) -> Dict[str, Tuple[float, float, float]]:
+                      img_w: int, img_h: int,
+                      scale: Optional[float] = None,
+                      pad_x: float = 0.0, pad_y: float = 0.0) -> Dict[str, Tuple[float, float, float]]:
         """SimCC 输出解码为关键点坐标
 
         pred_x / pred_y 形状为 [17, S]，S = 输入边长 × simcc_split_ratio(2)。
         按 AP-10K 官方索引映射到项目关键点名；AP-10K 没有耳部关键点，
         因此不会输出 left_ear / right_ear（特征提取时补零）。
+
+        scale 为 letterbox 的缩放比例，pad_x / pad_y 为填充偏移；
+        缺省时按「输入尺寸 → 区域尺寸」纯缩放处理（兼容旧调用）。
 
         置信度取 SimCC 峰值（模型原始分数，非概率），裁剪到 0~1
         供 UI 与规则分类器统一使用。
@@ -321,8 +358,6 @@ class AnimalPoseProcessor:
 
         split_x = pred_x.shape[1] / self.input_size[0]
         split_y = pred_y.shape[1] / self.input_size[1]
-        scale_x = img_w / self.input_size[0]
-        scale_y = img_h / self.input_size[1]
 
         for index in range(num_kpts):
             name = AP10K_KEYPOINT_MAP.get(index)
@@ -331,8 +366,18 @@ class AnimalPoseProcessor:
             x_idx = int(np.argmax(pred_x[index]))
             y_idx = int(np.argmax(pred_y[index]))
             peak = (float(np.max(pred_x[index])) + float(np.max(pred_y[index]))) / 2.0
-            x = float(np.clip(x_idx / split_x * scale_x, 0.0, img_w))
-            y = float(np.clip(y_idx / split_y * scale_y, 0.0, img_h))
+
+            x_input = x_idx / split_x
+            y_input = y_idx / split_y
+            if scale is None:
+                x = x_input * (img_w / self.input_size[0])
+                y = y_input * (img_h / self.input_size[1])
+            else:
+                x = (x_input - pad_x) / max(scale, 1e-6)
+                y = (y_input - pad_y) / max(scale, 1e-6)
+
+            x = float(np.clip(x, 0.0, img_w))
+            y = float(np.clip(y, 0.0, img_h))
             result[name] = (x, y, float(np.clip(peak, 0.0, 1.0)))
 
         return result

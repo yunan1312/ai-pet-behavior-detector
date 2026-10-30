@@ -44,6 +44,16 @@ intents:
     en_US: "I am resting quietly and observing my surroundings~"
     keywords: ["坐着", "静坐", "蹲坐"]
 
+  standing:
+    zh_CN: "我正站着观察周围，随时准备行动~"
+    en_US: "I am standing and watching, ready to move~"
+    keywords: ["站立", "站着", "起身"]
+
+  lying:
+    zh_CN: "我趴着休息一会儿，感觉很放松~"
+    en_US: "I am lying down for a bit, feeling relaxed~"
+    keywords: ["趴着", "趴卧", "躺着"]
+
   sleeping:
     zh_CN: "我正在美美地睡觉，不要打扰我哦~"
     en_US: "I am having a nice sleep, please dont disturb me~"

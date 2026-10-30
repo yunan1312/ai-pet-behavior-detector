@@ -36,6 +36,8 @@ class IntentMapper:
             'walking': {'zh_CN': '我在悠闲地散步~', 'en_US': 'I am taking a walk~'},
             'running': {'zh_CN': '我在奔跑~', 'en_US': 'I am running~'},
             'sitting': {'zh_CN': '我在安静地休息~', 'en_US': 'I am resting quietly~'},
+            'standing': {'zh_CN': '我站着观察周围~', 'en_US': 'I am standing and watching~'},
+            'lying': {'zh_CN': '我趴着放松一下~', 'en_US': 'I am lying down and relaxing~'},
             'sleeping': {'zh_CN': '我正在睡觉~', 'en_US': 'I am sleeping~'},
             'grooming': {'zh_CN': '我在梳理毛发~', 'en_US': 'I am grooming~'},
             'hunting': {'zh_CN': '我在准备捕猎！', 'en_US': 'I am hunting!~'},

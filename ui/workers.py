@@ -147,7 +147,7 @@ class RealtimeAnalysisWorker(QObject):
                     time.sleep(0.02)
                     continue
 
-                result = self.analyzer.analyze_frame(frame)
+                result = self.analyzer.analyze_frame(frame, timestamp=time.monotonic())
                 self.processed_frames += 1
                 stats_frames += 1
                 if result.get("triggered"):
@@ -263,7 +263,8 @@ class VideoAnalysisWorker(QObject):
                     continue
 
                 analyzed += 1
-                result = self.analyzer.analyze_single_image(frame)
+                timestamp = (frame_index / fps) if fps > 0 else float(position)
+                result = self.analyzer.analyze_video_sample(frame, timestamp=timestamp)
                 behavior = result.get("behavior", "")
                 confidence = float(result.get("confidence", 0.0) or 0.0)
                 if (

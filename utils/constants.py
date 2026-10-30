@@ -11,6 +11,8 @@ BEHAVIOR_DISPLAY_NAMES = {
     'walking': '行走',
     'running': '奔跑',
     'sitting': '坐着',
+    'standing': '站立',
+    'lying': '趴卧',
     'sleeping': '睡觉',
     'grooming': '理毛',
     'hunting': '捕猎',
@@ -31,6 +33,8 @@ BEHAVIOR_DISPLAY_NAMES_ICONS = {
     'walking': '行走',
     'running': '奔跑',
     'sitting': '坐着',
+    'standing': '站立',
+    'lying': '趴卧',
     'sleeping': '睡觉',
     'grooming': '理毛',
     'hunting': '捕猎',
@@ -51,6 +55,8 @@ BEHAVIOR_TO_EMOTION = {
     'walking': 'neutral',
     'running': 'playful',
     'sitting': 'relaxed',
+    'standing': 'neutral',
+    'lying': 'relaxed',
     'sleeping': 'sleepy',
     'grooming': 'relaxed',
     'hunting': 'hungry',
@@ -64,8 +70,8 @@ BEHAVIOR_TO_EMOTION = {
 BEHAVIORS = [
     'stretching', 'head_bunting', 'tail_raising', 'belly_exposure',
     'slow_blinking', 'airplane_ears', 'walking', 'running',
-    'sitting', 'sleeping', 'grooming', 'hunting', 'playing',
-    'tail_lashing', 'kneading', 'idle'
+    'sitting', 'standing', 'lying', 'sleeping', 'grooming',
+    'hunting', 'playing', 'tail_lashing', 'kneading', 'idle'
 ]
 
 # 姿态关键点定义（UI 与模型共享，避免重复维护）
