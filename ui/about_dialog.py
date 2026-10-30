@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 from PyQt6.QtCore import Qt
@@ -81,7 +82,7 @@ class AboutDialog(QDialog):
         features_card.body().addWidget(make_label("能力范围", "h3"))
         features_card.body().addWidget(
             make_label(
-                "16 种行为识别 · 实时摄像头分析 · 视频与图片分析\n"
+                "13 种行为识别 · 实时摄像头分析 · 视频与图片分析\n"
                 "关键点可视化 · 意图与情绪解读 · 语音播报\n"
                 "历史搜索与详情 · CSV / Markdown 报告导出",
                 "subtitle",
@@ -92,7 +93,12 @@ class AboutDialog(QDialog):
         layout.addStretch(1)
 
         data_row = QHBoxLayout()
-        data_path = make_label(str(DATA_DIR), "caption")
+        display_path = str(DATA_DIR)
+        home = str(Path.home())
+        if display_path.startswith(home):
+            display_path = "~" + display_path[len(home):]
+        data_path = make_label(display_path, "caption", wrap=True)
+        data_path.setToolTip(str(DATA_DIR))
         data_path.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         open_data_btn = QPushButton("打开数据目录")
         open_data_btn.setProperty("variant", "ghost")

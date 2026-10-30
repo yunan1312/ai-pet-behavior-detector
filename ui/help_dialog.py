@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ui.components import Divider
 from ui.theme import theme_manager, tokens
 from utils.constants import APP_VERSION
 
@@ -58,12 +59,13 @@ SECTIONS: List[Tuple[str, str]] = [
     (
         "支持的行为",
         """
-        <h2>可识别的 16 种行为</h2>
-        <p><b>放松愉悦</b>：伸懒腰、缓慢眨眼、踩奶、尾巴竖起、理毛</p>
-        <p><b>信任亲昵</b>：露肚皮、蹭物体、坐着、睡觉</p>
-        <p><b>活跃探索</b>：行走、奔跑、玩耍、捕猎</p>
-        <p><b>紧张警惕</b>：飞机耳、尾巴甩动</p>
-        <p>行为识别基于动物关键点几何特征与置信度筛选。光线充足、宠物完整出现在画面中时效果最佳。</p>
+        <h2>可识别的 13 种行为</h2>
+        <p><b>姿态</b>：站立、坐着、趴卧、睡觉</p>
+        <p><b>移动</b>：行走、奔跑、玩耍、捕猎</p>
+        <p><b>放松与互动</b>：伸懒腰、理毛、踩奶、蹭物体</p>
+        <p><b>默认</b>：发呆（没有明确证据时的状态）</p>
+        <p>当前姿态模型只输出 17 个身体关键点，不包含耳部与尾尖，「缓慢眨眼 / 飞机耳 / 尾巴竖起 / 尾巴甩动 / 露肚皮」已不再自动识别。
+        判定基于按体长归一化的几何特征与真实时间戳速度，换分辨率或帧率不影响结果；姿态标签需连续 2 帧一致才切换，避免闪烁。</p>
         <h2>意图与情绪</h2>
         <p>每种行为都会映射为一句自然的意图解读，并附带情绪标签（开心、放松、紧张等）。
         可在 <code>config/intent_mapping.yaml</code> 中自定义文案。</p>
@@ -115,12 +117,14 @@ def _build_html(title: str, body: str) -> str:
     p = tokens()
     return f"""
     <html><body style="font-family:'Microsoft YaHei UI','Segoe UI',sans-serif;
-        font-size:13px; color:{p['text']}; line-height:1.65;">
-      <h1 style="font-size:20px; color:{p['text']}; margin:4px 0 14px 0;">{title}</h1>
+        font-size:13px; color:{p['text']}; line-height:1.75;">
+      <h1 style="font-size:22px; color:{p['text']}; margin:2px 0 18px 0;
+        padding-bottom:10px; border-bottom:1px solid {p['border']};">{title}</h1>
       <style>
-        h2 {{ font-size:15px; color:{p['text']}; margin:18px 0 8px 0; }}
-        p {{ margin:6px 0; color:{p['text_secondary']}; }}
-        li {{ margin:4px 0; color:{p['text_secondary']}; }}
+        h2 {{ font-size:16px; color:{p['text']}; margin:16px 0 8px 0; }}
+        p {{ margin:8px 0; color:{p['text_secondary']}; }}
+        li {{ margin:6px 0; color:{p['text_secondary']}; }}
+        ul {{ margin:8px 0; padding-left:20px; }}
         b {{ color:{p['text']}; }}
         code {{ background:{p['surface_alt']}; color:{p['primary']};
                 padding:1px 5px; border-radius:4px; font-family:Consolas,monospace; }}
@@ -152,6 +156,7 @@ class HelpDialog(QDialog):
         content_row.setSpacing(12)
 
         self.nav = QListWidget()
+        self.nav.setObjectName("NavList")
         self.nav.setFixedWidth(168)
         for title, _body in SECTIONS:
             self.nav.addItem(title)
@@ -165,6 +170,7 @@ class HelpDialog(QDialog):
         content_row.addWidget(self.nav)
         content_row.addWidget(self.browser, 1)
         layout.addLayout(content_row, 1)
+        layout.addWidget(Divider())
 
         footer = QHBoxLayout()
         version = QPushButton(f"版本 v{APP_VERSION}")

@@ -83,6 +83,9 @@ class VideoPanel(QWidget):
         self.show_keypoints = True
 
         self._pixmap: Optional[QPixmap] = None
+        self._backdrop: Optional[QPixmap] = None
+        self._backdrop_key: Optional[Tuple[int, int]] = None
+        self._backdrop_age = 0
         self._mode_text = ""
         self._mode_live = False
         self._status_text = ""
@@ -118,6 +121,7 @@ class VideoPanel(QWidget):
         self.current_confidence = confidence or 0.0
         self._no_animal = not bool(self.keypoints)
         self._pixmap = self._to_pixmap(frame)
+        self._backdrop_age += 1
         self.update()
 
     def set_mode(self, text: str, live: bool = False) -> None:
@@ -144,6 +148,9 @@ class VideoPanel(QWidget):
         self.current_behavior = ""
         self.current_confidence = 0.0
         self._pixmap = None
+        self._backdrop = None
+        self._backdrop_key = None
+        self._backdrop_age = 0
         self._no_animal = False
         self._status_text = ""
         self._progress = None
@@ -223,10 +230,67 @@ class VideoPanel(QWidget):
             draw_w,
             draw_h,
         )
-        painter.drawPixmap(target, pixmap, QRectF(pixmap.rect()))
 
+        letterboxed = (
+            area.width() - draw_w > 6.0 or area.height() - draw_h > 6.0
+        )
+        if letterboxed:
+            self._paint_backdrop(painter, rect)
+
+        frame_path = QPainterPath()
+        frame_path.addRoundedRect(target, 10.0, 10.0)
+        painter.save()
+        painter.setClipPath(frame_path)
+        painter.drawPixmap(target, pixmap, QRectF(pixmap.rect()))
         if self.show_keypoints and self.keypoints:
             self._paint_keypoints(painter, target, source_w, source_h)
+        painter.restore()
+
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.setPen(QPen(QColor(255, 255, 255, 30), 1.0))
+        painter.drawRoundedRect(
+            target.adjusted(0.5, 0.5, -0.5, -0.5), 10.0, 10.0
+        )
+
+    def _paint_backdrop(self, painter: QPainter, rect: QRectF) -> None:
+        """竖屏或小画幅时用模糊放大的同帧铺底，避免大面积纯黑。"""
+        pixmap = self._pixmap
+        if pixmap is None:
+            return
+        key = (pixmap.width(), pixmap.height())
+        if (
+            self._backdrop is None
+            or self._backdrop_key != key
+            or self._backdrop_age % 15 == 0
+        ):
+            small_w = 56
+            small_h = max(1, round(56 * pixmap.height() / pixmap.width()))
+            self._backdrop = pixmap.scaled(
+                small_w,
+                small_h,
+                Qt.AspectRatioMode.IgnoreAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            self._backdrop_key = key
+            self._backdrop_age = 1
+
+        cover = self._backdrop
+        ratio = max(
+            rect.width() / cover.width(), rect.height() / cover.height()
+        )
+        width = cover.width() * ratio
+        height = cover.height() * ratio
+        painter.drawPixmap(
+            QRectF(
+                rect.center().x() - width / 2,
+                rect.center().y() - height / 2,
+                width,
+                height,
+            ),
+            cover,
+            QRectF(cover.rect()),
+        )
+        painter.fillRect(rect, QColor(6, 10, 17, 170))
 
     def _paint_keypoints(
         self,

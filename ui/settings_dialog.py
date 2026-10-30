@@ -23,7 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from core.speech_synthesizer import VOICE_DISPLAY_NAMES
-from ui.components import Card, make_label
+from ui.components import Card, Divider, make_label
 from ui.theme import DARK, LIGHT, THEME_NAMES, current_theme, theme_manager
 from utils.config_loader import ConfigLoader
 from utils.paths import BASE_DIR, CONFIG_DIR, DATA_DIR, open_path
@@ -48,8 +48,8 @@ class SettingsDialog(QDialog):
         self._original_theme = current_theme()
         self.setWindowTitle("设置")
         self.setModal(True)
-        self.resize(780, 600)
-        self.setMinimumSize(700, 540)
+        self.resize(780, 560)
+        self.setMinimumSize(700, 520)
         self.init_ui()
         self.load_settings()
 
@@ -67,6 +67,7 @@ class SettingsDialog(QDialog):
         content = QHBoxLayout()
         content.setSpacing(12)
         self.nav = QListWidget()
+        self.nav.setObjectName("NavList")
         self.nav.setFixedWidth(148)
         self.nav.addItems(PAGE_TITLES)
         self.nav.currentRowChanged.connect(self._switch_page)
@@ -79,6 +80,7 @@ class SettingsDialog(QDialog):
         content.addWidget(self.nav)
         content.addWidget(self.stack, 1)
         layout.addLayout(content, 1)
+        layout.addWidget(Divider())
 
         footer = QHBoxLayout()
         footer.setSpacing(8)

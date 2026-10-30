@@ -50,17 +50,17 @@ class ControlPanel(QWidget):
         row.setSpacing(8)
 
         self.start_btn = QPushButton("开始识别")
-        self.start_btn.setProperty("variant", "success")
+        self.start_btn.setProperty("variant", "primary")
         self.start_btn.setMinimumWidth(112)
-        self.start_btn.setFixedHeight(36)
+        self.start_btn.setFixedHeight(34)
         self.start_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.start_btn.setToolTip("启动摄像头实时分析（Ctrl+R）")
         self.start_btn.clicked.connect(self.on_start_clicked)
 
         self.stop_btn = QPushButton("停止识别")
-        self.stop_btn.setProperty("variant", "danger")
+        self.stop_btn.setProperty("variant", "outline-danger")
         self.stop_btn.setMinimumWidth(96)
-        self.stop_btn.setFixedHeight(36)
+        self.stop_btn.setFixedHeight(34)
         self.stop_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.stop_btn.setEnabled(False)
         self.stop_btn.setToolTip("结束实时分析并保存记录（Ctrl+T）")
@@ -68,7 +68,7 @@ class ControlPanel(QWidget):
 
         self.cancel_btn = QPushButton("取消分析")
         self.cancel_btn.setProperty("variant", "soft")
-        self.cancel_btn.setFixedHeight(36)
+        self.cancel_btn.setFixedHeight(34)
         self.cancel_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.cancel_btn.setVisible(False)
         self.cancel_btn.clicked.connect(self.cancel_requested.emit)
@@ -79,20 +79,20 @@ class ControlPanel(QWidget):
         separator.setStyleSheet("background: transparent; border: none;")
 
         self.video_btn = QPushButton("导入视频")
-        self.video_btn.setFixedHeight(36)
+        self.video_btn.setFixedHeight(34)
         self.video_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.video_btn.setToolTip("分析本地视频文件（Ctrl+O）")
         self.video_btn.clicked.connect(self.import_video_clicked.emit)
 
         self.image_btn = QPushButton("导入图片")
-        self.image_btn.setFixedHeight(36)
+        self.image_btn.setFixedHeight(34)
         self.image_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.image_btn.setToolTip("分析单张宠物图片（Ctrl+I）")
         self.image_btn.clicked.connect(self.import_image_clicked.emit)
 
         self.snapshot_btn = QPushButton("保存画面")
         self.snapshot_btn.setProperty("variant", "ghost")
-        self.snapshot_btn.setFixedHeight(36)
+        self.snapshot_btn.setFixedHeight(34)
         self.snapshot_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.snapshot_btn.setToolTip("将当前画面保存为图片（Ctrl+S）")
         self.snapshot_btn.clicked.connect(self.snapshot_clicked.emit)
@@ -105,7 +105,7 @@ class ControlPanel(QWidget):
         camera_label = make_label("摄像头", "caption")
         self.camera_combo = QComboBox()
         self.camera_combo.setMinimumWidth(150)
-        self.camera_combo.setFixedHeight(32)
+        self.camera_combo.setFixedHeight(34)
         self.camera_combo.setToolTip("选择用于实时分析的摄像头")
         self.camera_combo.currentIndexChanged.connect(self._on_camera_changed)
 
@@ -133,7 +133,7 @@ class ControlPanel(QWidget):
         row.addStretch(1)
 
         sheet.body().addLayout(row)
-        sheet.body().addSpacing(8)
+        sheet.body().addSpacing(10)
 
         context_row = QHBoxLayout()
         context_row.setSpacing(8)

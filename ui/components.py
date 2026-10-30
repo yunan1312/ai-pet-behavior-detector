@@ -164,8 +164,8 @@ class Toast(QLabel):
 class Divider(QFrame):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.setObjectName("Divider")
         self.setFixedHeight(1)
-        self.setStyleSheet("background-color: palette(mid); opacity: 0.5;")
 
 
 def horizontal_row(*widgets, spacing: int = 8, stretch_last: bool = True) -> QHBoxLayout:

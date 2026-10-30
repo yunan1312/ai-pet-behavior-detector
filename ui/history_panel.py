@@ -151,6 +151,7 @@ class HistoryPanel(QWidget):
         table.customContextMenuRequested.connect(self._show_context_menu)
 
         header = table.horizontalHeader()
+        header.setSortIndicatorShown(False)
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)

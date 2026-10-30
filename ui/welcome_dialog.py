@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.components import Card, make_label
+from ui.components import Card, make_chip, make_label
 from utils.constants import APP_VERSION
 from utils.paths import app_icon_path
 
@@ -28,8 +28,8 @@ class WelcomeDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("欢迎使用")
         self.setModal(True)
-        self.resize(760, 640)
-        self.setMinimumSize(680, 580)
+        self.resize(760, 560)
+        self.setMinimumSize(680, 520)
         self.init_ui()
 
     @property
@@ -118,6 +118,20 @@ class WelcomeDialog(QDialog):
             row.addWidget(label, 1)
             steps_card.body().addLayout(row)
         layout.addWidget(steps_card)
+
+        caps_card = Card(margins=(18, 12, 18, 12), spacing=8)
+        caps_card.body().addWidget(make_label("可识别的行为", "h3"))
+        caps = QGridLayout()
+        caps.setHorizontalSpacing(6)
+        caps.setVerticalSpacing(6)
+        behaviors = [
+            "站立", "坐着", "趴卧", "睡觉", "行走", "奔跑", "伸懒腰",
+            "理毛", "踩奶", "蹭物体", "捕猎", "玩耍", "发呆",
+        ]
+        for index, name in enumerate(behaviors):
+            caps.addWidget(make_chip(name), index // 7, index % 7)
+        caps_card.body().addLayout(caps)
+        layout.addWidget(caps_card)
         layout.addStretch(1)
 
         footer = QHBoxLayout()

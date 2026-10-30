@@ -249,6 +249,7 @@ class MainWindow(QMainWindow):
         self.control_panel.camera_changed.connect(lambda _index: self._refresh_actions())
 
         self.info_panel.speech_toggled.connect(self._on_speech_toggled)
+        self.info_panel.history_requested.connect(lambda: self._show_bottom_tab(1))
         self.log_panel.status_message.connect(self._on_panel_status)
         self.history_panel.status_message.connect(self._on_panel_status)
         self.history_panel.record_selected.connect(self._on_record_selected)

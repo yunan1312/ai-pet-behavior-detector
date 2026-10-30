@@ -9,7 +9,6 @@ from typing import List, Optional, Tuple
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QProgressBar,
@@ -46,6 +45,7 @@ EMOTION_COLORS = {
 
 class InfoPanel(QScrollArea):
     speech_toggled = pyqtSignal(bool)
+    history_requested = pyqtSignal()
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -53,7 +53,7 @@ class InfoPanel(QScrollArea):
         self.current_confidence = 0.0
         self.current_intent = ""
         self.recent_behaviors: List[Tuple[str, float, str]] = []
-        self.max_recent = 6
+        self.max_recent = 3
         self._speech_enabled = True
         self._last_recent_key: Optional[str] = None
         self._last_recent_time = 0.0
@@ -73,12 +73,11 @@ class InfoPanel(QScrollArea):
         container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 2, 0)
-        layout.setSpacing(12)
+        layout.setSpacing(10)
 
         layout.addWidget(self._build_hero())
         layout.addWidget(self._build_intent_card())
         layout.addWidget(self._build_recent_card())
-        layout.addWidget(self._build_stats_card())
         layout.addStretch(1)
 
         self.setWidget(container)
@@ -88,10 +87,10 @@ class InfoPanel(QScrollArea):
         hero = QFrame()
         hero.setObjectName("InfoHero")
         hero.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        hero.setMinimumHeight(148)
+        hero.setMinimumHeight(156)
         layout = QVBoxLayout(hero)
-        layout.setContentsMargins(18, 16, 18, 16)
-        layout.setSpacing(7)
+        layout.setContentsMargins(18, 12, 18, 10)
+        layout.setSpacing(4)
 
         top_row = QHBoxLayout()
         top_row.setSpacing(8)
@@ -125,21 +124,47 @@ class InfoPanel(QScrollArea):
         bottom_row.addStretch(1)
         bottom_row.addWidget(self.emotion_label)
 
+        stats_row = QHBoxLayout()
+        stats_row.setSpacing(0)
+        self.stat_frames = self._make_stat("--", "分析帧")
+        self.stat_detections = self._make_stat("0", "识别次数")
+        self.stat_duration = self._make_stat("00:00", "时长")
+        for index, stat in enumerate(
+            (self.stat_frames, self.stat_detections, self.stat_duration)
+        ):
+            if index:
+                stats_row.addWidget(self._hero_divider())
+            stats_row.addWidget(stat[0], 1)
+
         layout.addLayout(top_row)
         layout.addWidget(self.behavior_name_label)
         layout.addWidget(self.confidence_bar)
         layout.addLayout(bottom_row)
+        layout.addSpacing(3)
+        divider = QFrame()
+        divider.setObjectName("HeroDivider")
+        divider.setFixedHeight(1)
+        layout.addWidget(divider)
+        layout.addLayout(stats_row)
         return hero
 
+    @staticmethod
+    def _hero_divider() -> QFrame:
+        line = QFrame()
+        line.setObjectName("HeroDivider")
+        line.setFixedWidth(1)
+        line.setFixedHeight(26)
+        return line
+
     def _build_intent_card(self) -> QWidget:
-        card = Card()
+        card = Card(margins=(16, 12, 16, 12), spacing=8)
         header = QHBoxLayout()
         header.setSpacing(8)
         title = make_label("意图解读", "h3")
         self.speech_btn = QPushButton()
         self.speech_btn.setProperty("variant", "ghost")
         self.speech_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.speech_btn.setFixedHeight(28)
+        self.speech_btn.setFixedHeight(26)
         self.speech_btn.clicked.connect(self._on_speech_clicked)
         self._update_speech_button()
         header.addWidget(title)
@@ -149,7 +174,7 @@ class InfoPanel(QScrollArea):
         self.intent_label = QLabel("识别到行为后，将在这里解读宠物的情绪与需求。")
         self.intent_label.setObjectName("IntentText")
         self.intent_label.setWordWrap(True)
-        self.intent_label.setMinimumHeight(76)
+        self.intent_label.setMinimumHeight(52)
         self.intent_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.intent_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
@@ -164,65 +189,53 @@ class InfoPanel(QScrollArea):
         return card
 
     def _build_recent_card(self) -> QWidget:
-        card = Card()
+        card = Card(margins=(16, 12, 16, 12), spacing=8)
         header = QHBoxLayout()
         header.setSpacing(8)
         title = make_label("最近行为", "h3")
         self.recent_count = make_label("0", "caption")
         self.recent_count.setProperty("chip", "true")
+        self.recent_all_btn = QPushButton("查看全部")
+        self.recent_all_btn.setProperty("variant", "ghost")
+        self.recent_all_btn.setFixedHeight(24)
+        self.recent_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.recent_all_btn.setToolTip("在底部「历史记录」中查看完整记录")
+        self.recent_all_btn.clicked.connect(self.history_requested.emit)
         header.addWidget(title)
-        header.addStretch(1)
         header.addWidget(self.recent_count)
+        header.addStretch(1)
+        header.addWidget(self.recent_all_btn)
 
         self.recent_container = QWidget()
         self.recent_layout = QVBoxLayout(self.recent_container)
         self.recent_layout.setContentsMargins(0, 0, 0, 0)
-        self.recent_layout.setSpacing(6)
+        self.recent_layout.setSpacing(4)
 
         self.history_placeholder = make_label("暂无识别记录", "caption")
         self.history_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.history_placeholder.setMinimumHeight(52)
+        self.history_placeholder.setMinimumHeight(44)
 
         card.body().addLayout(header)
         card.body().addWidget(self.recent_container)
         card.body().addWidget(self.history_placeholder)
         return card
 
-    def _build_stats_card(self) -> QWidget:
-        card = Card()
-        header = make_label("本次会话", "h3")
-        card.body().addWidget(header)
-
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(8)
-        grid.setVerticalSpacing(0)
-        self.stat_frames = self._make_stat("--", "分析帧")
-        self.stat_detections = self._make_stat("0", "识别次数")
-        self.stat_duration = self._make_stat("00:00", "时长")
-        grid.addWidget(self.stat_frames[0], 0, 0)
-        grid.addWidget(self.stat_detections[0], 0, 1)
-        grid.addWidget(self.stat_duration[0], 0, 2)
-        for column in range(3):
-            grid.setColumnStretch(column, 1)
-        card.body().addLayout(grid)
-        return card
-
     @staticmethod
-    def _make_stat(value: str, caption: str) -> Tuple[QFrame, QLabel]:
-        tile = QFrame()
-        tile.setObjectName("StatTile")
-        layout = QVBoxLayout(tile)
-        layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(1)
+    def _make_stat(value: str, caption: str) -> Tuple[QWidget, QLabel]:
+        cell = QWidget()
+        cell.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        layout = QVBoxLayout(cell)
+        layout.setContentsMargins(0, 2, 0, 0)
+        layout.setSpacing(0)
         value_label = QLabel(value)
-        value_label.setObjectName("StatValue")
-        value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        value_label.setObjectName("HeroStatValue")
+        value_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         caption_label = QLabel(caption)
-        caption_label.setObjectName("StatCaption")
-        caption_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        caption_label.setObjectName("HeroStatCaption")
+        caption_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(value_label)
         layout.addWidget(caption_label)
-        return tile, value_label
+        return cell, value_label
 
     # -------------------------------------------------------------- behavior
     def update_behavior(
@@ -289,10 +302,10 @@ class InfoPanel(QScrollArea):
 
         row = QFrame()
         row.setProperty("recent", "true")
-        row.setMinimumHeight(52)
+        row.setMinimumHeight(44)
         row.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         row_layout = QHBoxLayout(row)
-        row_layout.setContentsMargins(10, 7, 10, 7)
+        row_layout.setContentsMargins(10, 5, 10, 5)
         row_layout.setSpacing(8)
 
         dot = QLabel()
@@ -305,11 +318,13 @@ class InfoPanel(QScrollArea):
         name_label = QLabel(display)
         name_label.setProperty("role", "h3")
         intent_short = intent.strip()
-        if len(intent_short) > 22:
-            intent_short = intent_short[:21] + "…"
+        if len(intent_short) > 20:
+            intent_short = intent_short[:19] + "…"
         detail = QLabel(intent_short or "—")
         detail.setProperty("role", "caption")
         detail.setWordWrap(False)
+        detail.setToolTip(intent.strip())
+        row.setToolTip(intent.strip() or display)
         text_box.addWidget(name_label)
         text_box.addWidget(detail)
 

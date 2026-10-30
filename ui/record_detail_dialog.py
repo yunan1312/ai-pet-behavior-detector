@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.components import Card, make_chip, make_label
+from ui.components import Card, Divider, make_chip, make_label
 from ui.theme import theme_manager
 from utils.constants import BEHAVIOR_DISPLAY_NAMES
 from utils.exporters import export_record_markdown
@@ -94,7 +94,7 @@ class RecordDetailDialog(QDialog):
         content = QWidget()
         content.setObjectName("Page")
         content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(0, 0, 4, 0)
+        content_layout.setContentsMargins(0, 0, 4, 8)
         content_layout.setSpacing(12)
 
         content_layout.addWidget(self._build_summary())
@@ -103,8 +103,10 @@ class RecordDetailDialog(QDialog):
         content_layout.addStretch(1)
         scroll.setWidget(content)
         layout.addWidget(scroll, 1)
+        layout.addWidget(Divider())
 
         buttons = QHBoxLayout()
+        buttons.setSpacing(8)
         buttons.addStretch(1)
         export_btn = QPushButton("导出 Markdown 报告")
         export_btn.setProperty("variant", "soft")

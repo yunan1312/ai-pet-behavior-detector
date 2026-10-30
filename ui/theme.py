@@ -318,6 +318,19 @@ _QSS = Template(
         border-radius: 9px;
         padding: 2px 9px;
     }
+    QLabel#HeroStatValue {
+        font-size: 17px;
+        font-weight: 700;
+        color: #FFFFFF;
+    }
+    QLabel#HeroStatCaption {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.72);
+    }
+    QFrame#HeroDivider {
+        background: rgba(255, 255, 255, 0.18);
+        border: none;
+    }
     QProgressBar#HeroProgress {
         background-color: rgba(255, 255, 255, 0.24);
         border: none;
@@ -336,23 +349,6 @@ _QSS = Template(
         border-radius: 10px;
         padding: 13px;
         font-size: 13px;
-    }
-    QLabel#StatValue {
-        font-size: 18px;
-        font-weight: 700;
-        color: $text;
-    }
-    QLabel#StatCaption {
-        font-size: 10px;
-        color: $text_muted;
-    }
-    QFrame#StatTile {
-        background-color: $surface_alt;
-        border: 1px solid $border;
-        border-radius: 9px;
-    }
-    QFrame#StatTile QLabel {
-        background: transparent;
     }
     QLabel#BrandTitle {
         font-size: 16px;
@@ -434,6 +430,24 @@ _QSS = Template(
         background-color: $surface_hover;
         color: $text_muted;
         border-color: transparent;
+    }
+    QPushButton[variant="outline-danger"] {
+        background-color: transparent;
+        color: $danger;
+        border: 1px solid $danger;
+        font-weight: 600;
+    }
+    QPushButton[variant="outline-danger"]:hover {
+        background-color: $danger_soft;
+    }
+    QPushButton[variant="outline-danger"]:pressed {
+        background-color: $danger_soft;
+        border-color: $danger_hover;
+    }
+    QPushButton[variant="outline-danger"]:disabled {
+        background-color: transparent;
+        color: $text_muted;
+        border-color: $border;
     }
     QPushButton[variant="soft"] {
         background-color: $primary_soft;
@@ -706,12 +720,29 @@ _QSS = Template(
         background-color: $primary_soft;
         color: $primary;
     }
+    QListWidget#NavList {
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
+    QListWidget#NavList::item {
+        padding: 9px 11px;
+        margin-bottom: 2px;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    QFrame#Divider {
+        background-color: $border;
+        border: none;
+        max-height: 1px;
+        min-height: 1px;
+    }
     QTextBrowser {
         background-color: $surface;
         color: $text;
         border: 1px solid $border;
         border-radius: 9px;
-        padding: 8px;
+        padding: 14px;
         selection-background-color: $primary_soft;
         selection-color: $text;
     }
